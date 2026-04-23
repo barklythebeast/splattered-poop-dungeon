@@ -183,6 +183,8 @@ public class Dungeon {
 	public static float mobsToChampion;
 
 	public static Hero hero;
+	public static Hero[] heroes;  // Support for multiplayer
+	public static int numPlayers = 1;  // Track number of players
 	public static Level level;
 
 	public static QuickSlot quickslot = new QuickSlot();

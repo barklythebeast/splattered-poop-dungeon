@@ -42,6 +42,8 @@ public class GamesInProgress {
 	public static int curSlot;
 	
 	public static HeroClass selectedClass;
+	public static HeroClass[] selectedClasses = new HeroClass[3];  // For multiplayer
+	public static int numSelectedPlayers = 1;  // Number of players selected
 	public static boolean randomizedClass = false;
 	
 	private static final String GAME_FOLDER = "game%d";
