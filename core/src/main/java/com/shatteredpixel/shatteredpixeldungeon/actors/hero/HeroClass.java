@@ -98,6 +98,10 @@ public enum HeroClass {
 	}
 
 	public void initHero( Hero hero ) {
+		initHero(hero, false);
+	}
+
+	public void initHero( Hero hero, boolean isMultiplayer ) {
 
 		hero.heroClass = this;
 		Talent.initClassTalents(hero);
@@ -118,27 +122,27 @@ public enum HeroClass {
 
 		switch (this) {
 			case WARRIOR:
-				initWarrior( hero );
+				initWarrior( hero, isMultiplayer );
 				break;
 
 			case MAGE:
-				initMage( hero );
+				initMage( hero, isMultiplayer );
 				break;
 
 			case ROGUE:
-				initRogue( hero );
+				initRogue( hero, isMultiplayer );
 				break;
 
 			case HUNTRESS:
-				initHuntress( hero );
+				initHuntress( hero, isMultiplayer );
 				break;
 
 			case DUELIST:
-				initDuelist( hero );
+				initDuelist( hero, isMultiplayer );
 				break;
 
 			case CLERIC:
-				initCleric( hero );
+				initCleric( hero, isMultiplayer );
 				break;
 		}
 
@@ -171,7 +175,7 @@ public enum HeroClass {
 		return null;
 	}
 
-	private static void initWarrior( Hero hero ) {
+	private static void initWarrior( Hero hero, boolean isMultiplayer ) {
 		(hero.belongings.weapon = new WornShortsword()).identify();
 		ThrowingStone stones = new ThrowingStone();
 		stones.identify().collect();
@@ -184,10 +188,13 @@ public enum HeroClass {
 		}
 
 		new PotionOfHealing().identify();
+		if (isMultiplayer) new PotionOfHealing().identify();
+
 		new ScrollOfRage().identify();
+		if (isMultiplayer) new ScrollOfRage().identify();
 	}
 
-	private static void initMage( Hero hero ) {
+	private static void initMage( Hero hero, boolean isMultiplayer ) {
 		MagesStaff staff;
 
 		staff = new MagesStaff(new WandOfMagicMissile());
@@ -198,10 +205,13 @@ public enum HeroClass {
 		Dungeon.quickslot.setSlot(0, staff);
 
 		new ScrollOfUpgrade().identify();
+		if (isMultiplayer) new ScrollOfUpgrade().identify();
+
 		new PotionOfLiquidFlame().identify();
+		if (isMultiplayer) new PotionOfLiquidFlame().identify();
 	}
 
-	private static void initRogue( Hero hero ) {
+	private static void initRogue( Hero hero, boolean isMultiplayer ) {
 		(hero.belongings.weapon = new Dagger()).identify();
 
 		CloakOfShadows cloak = new CloakOfShadows();
@@ -215,10 +225,13 @@ public enum HeroClass {
 		Dungeon.quickslot.setSlot(1, knives);
 
 		new ScrollOfMagicMapping().identify();
+		if (isMultiplayer) new ScrollOfMagicMapping().identify();
+
 		new PotionOfInvisibility().identify();
+		if (isMultiplayer) new PotionOfInvisibility().identify();
 	}
 
-	private static void initHuntress( Hero hero ) {
+	private static void initHuntress( Hero hero, boolean isMultiplayer ) {
 
 		(hero.belongings.weapon = new Gloves()).identify();
 		SpiritBow bow = new SpiritBow();
@@ -227,10 +240,13 @@ public enum HeroClass {
 		Dungeon.quickslot.setSlot(0, bow);
 
 		new PotionOfMindVision().identify();
+		if (isMultiplayer) new PotionOfMindVision().identify();
+
 		new ScrollOfLullaby().identify();
+		if (isMultiplayer) new ScrollOfLullaby().identify();
 	}
 
-	private static void initDuelist( Hero hero ) {
+	private static void initDuelist( Hero hero, boolean isMultiplayer ) {
 
 		(hero.belongings.weapon = new Rapier()).identify();
 		hero.belongings.weapon.activate(hero);
@@ -242,10 +258,13 @@ public enum HeroClass {
 		Dungeon.quickslot.setSlot(1, spikes);
 
 		new PotionOfStrength().identify();
+		if (isMultiplayer) new PotionOfStrength().identify();
+
 		new ScrollOfMirrorImage().identify();
+		if (isMultiplayer) new ScrollOfMirrorImage().identify();
 	}
 
-	private static void initCleric( Hero hero ) {
+	private static void initCleric( Hero hero, boolean isMultiplayer ) {
 
 		(hero.belongings.weapon = new Cudgel()).identify();
 		hero.belongings.weapon.activate(hero);
@@ -257,7 +276,10 @@ public enum HeroClass {
 		Dungeon.quickslot.setSlot(0, tome);
 
 		new PotionOfPurity().identify();
+		if (isMultiplayer) new PotionOfPurity().identify();
+
 		new ScrollOfRemoveCurse().identify();
+		if (isMultiplayer) new ScrollOfRemoveCurse().identify();
 	}
 
 	public String title() {

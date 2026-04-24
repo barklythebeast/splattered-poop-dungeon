@@ -286,6 +286,32 @@ public class Dungeon {
 		Badges.reset();
 		
 		GamesInProgress.selectedClass.initHero( hero );
+
+	// Initialize multiplayer if needed
+	numPlayers = GamesInProgress.numSelectedPlayers;
+	if (numPlayers > 1) {
+		initMultiplayer();
+	}
+	}
+
+	public static void initMultiplayer() {
+		// Initialize heroes (single player or multiplayer)
+		numPlayers = GamesInProgress.numSelectedPlayers;
+		if (numPlayers > 1) {
+			heroes = new Hero[numPlayers];
+			for (int i = 0; i < numPlayers; i++) {
+				Hero h = new Hero();
+				h.live();
+				heroes[i] = h;
+
+				if (GamesInProgress.selectedClasses[i] != null) {
+					GamesInProgress.selectedClasses[i].initHero(h, true);  // Pass isMultiplayer=true
+				}
+			}
+			hero = heroes[0];
+		}
+
+		MultiplayerManager.init(numPlayers);
 	}
 
 	public static boolean isChallenged( int mask ) {
