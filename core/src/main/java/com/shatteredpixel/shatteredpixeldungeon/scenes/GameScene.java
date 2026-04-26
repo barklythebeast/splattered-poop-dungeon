@@ -167,6 +167,7 @@ public class GameScene extends PixelScene {
 	private WallBlockingTilemap wallBlocking;
 	private FogOfWar fog;
 	private HeroSprite hero;
+	private HeroSprite[] heroSprites;  // For multiplayer support
 
 	private MenuPane menu;
 	private StatusPane status;
