@@ -652,14 +652,27 @@ public class Armor extends EquipableItem {
 
 	@Override
 	public Item random() {
-		//+0: 75% (3/4)
-		//+1: 20% (4/20)
-		//+2: 5%  (1/20)
+		// Increase upgrade chances in multiplayer (double the chance)
+		boolean isMultiplayer = Dungeon.numPlayers > 1;
+
+		//Standard: +0: 75% (3/4), +1: 20% (4/20), +2: 5%  (1/20)
+		//Multiplayer: +0: 50%, +1: 40% (2x chance), +2: 10% (2x chance)
 		int n = 0;
-		if (Random.Int(4) == 0) {
-			n++;
-			if (Random.Int(5) == 0) {
+		if (isMultiplayer) {
+			// Double upgrade chances in multiplayer
+			if (Random.Int(2) == 0) {  // 50% instead of 25%
 				n++;
+				if (Random.Int(5) == 0) {  // Still 20% for +2
+					n++;
+				}
+			}
+		} else {
+			// Standard single-player chances
+			if (Random.Int(4) == 0) {  // 25%
+				n++;
+				if (Random.Int(5) == 0) {  // 5%
+					n++;
+				}
 			}
 		}
 		level(n);
