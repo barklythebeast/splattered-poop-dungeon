@@ -27,6 +27,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
+import com.shatteredpixel.shatteredpixeldungeon.MultiplayerManager;
 import com.shatteredpixel.shatteredpixeldungeon.Rankings;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
@@ -309,10 +310,25 @@ public class GameScene extends PixelScene {
 		mobs = new Group();
 		add( mobs );
 
-		hero = new HeroSprite();
-		hero.place( Dungeon.hero.pos );
-		hero.updateArmor();
-		mobs.add( hero );
+		// Initialize hero sprites (multiplayer support)
+		if (Dungeon.numPlayers > 1) {
+			// Multiplayer: create sprites for all heroes
+			heroSprites = new HeroSprite[Dungeon.numPlayers];
+			for (int i = 0; i < Dungeon.numPlayers; i++) {
+				HeroSprite sprite = new HeroSprite();
+				sprite.place(Dungeon.heroes[i].pos);
+				sprite.updateArmor();
+				heroSprites[i] = sprite;
+				mobs.add(sprite);
+			}
+			hero = heroSprites[0]; // Main reference for backward compatibility
+		} else {
+			// Single player: use original logic
+			hero = new HeroSprite();
+			hero.place( Dungeon.hero.pos );
+			hero.updateArmor();
+			mobs.add( hero );
+		}
 		
 		for (Mob mob : Dungeon.level.mobs) {
 			addMobSprite( mob );
@@ -582,17 +598,28 @@ public class GameScene extends PixelScene {
 
 		Dungeon.hero.next();
 
+		// Get the sprite to follow (current player in multiplayer, or main hero in single player)
+		HeroSprite spriteToFollow = hero;
+		if (MultiplayerManager.isMultiplayer()) {
+			Hero currentHero = MultiplayerManager.getCurrentPlayer();
+			int currentIdx = MultiplayerManager.getCurrentPlayerIndex();
+			if (currentHero != null && currentIdx < heroSprites.length && heroSprites[currentIdx] != null) {
+				spriteToFollow = heroSprites[currentIdx];
+			}
+			updateMultiplayerHeroSprites();
+		}
+
 		switch (InterlevelScene.mode){
 			case FALL: case DESCEND: case CONTINUE:
-				Camera.main.snapTo(hero.center().x, hero.center().y - DungeonTilemap.SIZE * (defaultZoom/Camera.main.zoom));
+				Camera.main.snapTo(spriteToFollow.center().x, spriteToFollow.center().y - DungeonTilemap.SIZE * (defaultZoom/Camera.main.zoom));
 				break;
 			case ASCEND:
-				Camera.main.snapTo(hero.center().x, hero.center().y + DungeonTilemap.SIZE * (defaultZoom/Camera.main.zoom));
+				Camera.main.snapTo(spriteToFollow.center().x, spriteToFollow.center().y + DungeonTilemap.SIZE * (defaultZoom/Camera.main.zoom));
 				break;
 			default:
-				Camera.main.snapTo(hero.center().x, hero.center().y);
+				Camera.main.snapTo(spriteToFollow.center().x, spriteToFollow.center().y);
 		}
-		Camera.main.panTo(hero.center(), 2.5f);
+		Camera.main.panTo(spriteToFollow.center(), 2.5f);
 
 		if (InterlevelScene.mode != InterlevelScene.Mode.NONE) {
 			if (Dungeon.depth == Statistics.deepestFloor
@@ -1058,6 +1085,31 @@ public class GameScene extends PixelScene {
 		mobs.add( sprite );
 		sprite.link( mob );
 		sortMobSprites();
+	}
+
+	// Update multiplayer hero sprite highlighting and camera focus
+	private void updateMultiplayerHeroSprites() {
+		if (!MultiplayerManager.isMultiplayer() || heroSprites == null) {
+			return;
+		}
+
+		int currentIdx = MultiplayerManager.getCurrentPlayerIndex();
+		Hero currentHero = MultiplayerManager.getCurrentPlayer();
+
+		// Update highlighting for all hero sprites
+		for (int i = 0; i < heroSprites.length; i++) {
+			if (heroSprites[i] != null) {
+				if (i == currentIdx) {
+					// Highlight the current player's sprite (slightly brighter/glow effect)
+					heroSprites[i].alpha(1.0f);
+					heroSprites[i].highlight(0xFFFFFF); // White highlight
+				} else {
+					// Dim other players' sprites
+					heroSprites[i].alpha(0.6f);
+					heroSprites[i].highlight(0x000000); // No highlight
+				}
+			}
+		}
 	}
 
 	//ensures that mob sprites are drawn from top to bottom, in case of overlap
@@ -1649,6 +1701,11 @@ public class GameScene extends PixelScene {
 			tagDisappeared = false;
 			updateTags = true;
 		}
+
+		// Update multiplayer highlighting when a player gets their turn
+		if (scene != null && MultiplayerManager.isMultiplayer()) {
+			scene.updateMultiplayerHeroSprites();
+		}
 	}
 	
 	public static void checkKeyHold(){
@@ -1751,8 +1808,19 @@ public class GameScene extends PixelScene {
 	private static final CellSelector.Listener defaultCellListener = new CellSelector.Listener() {
 		@Override
 		public void onSelect( Integer cell ) {
-			if (Dungeon.hero.handle( cell )) {
-				Dungeon.hero.next();
+			// Get the current player (in multiplayer) or main hero (in single player)
+			Hero currentHero = MultiplayerManager.getCurrentPlayer();
+			if (currentHero == null) {
+				currentHero = Dungeon.hero;
+			}
+
+			if (currentHero.handle( cell )) {
+				if (MultiplayerManager.isMultiplayer()) {
+					// In multiplayer, register the action but don't immediately call next()
+					MultiplayerManager.selectAction(currentHero, null);
+				} else {
+					currentHero.next();
+				}
 			}
 		}
 

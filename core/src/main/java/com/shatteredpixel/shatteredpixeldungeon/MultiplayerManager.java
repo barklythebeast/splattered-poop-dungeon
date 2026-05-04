@@ -100,6 +100,18 @@ public class MultiplayerManager {
 				}
 			}
 		}
+
+		// After all actions are set, advance the turn for all heroes
+		if (Dungeon.hero != null) {
+			Dungeon.hero.next();
+		}
+		if (Dungeon.heroes != null) {
+			for (Hero hero : Dungeon.heroes) {
+				if (hero != null && hero != Dungeon.hero) {
+					hero.next();
+				}
+			}
+		}
 	}
 	
 	private static void resetForNextRound() {

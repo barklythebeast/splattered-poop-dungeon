@@ -25,6 +25,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
+import com.shatteredpixel.shatteredpixeldungeon.MultiplayerManager;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -624,6 +625,12 @@ public class InterlevelScene extends PixelScene {
 		if (Dungeon.hero == null) {
 			Mob.clearHeldAllies();
 			Dungeon.init();
+
+			// Initialize multiplayer if selected
+			if (GamesInProgress.numSelectedPlayers > 1) {
+				Dungeon.initMultiplayer();
+			}
+
 			GameLog.wipe();
 
 			//When debugging, we may start a game at a later depth to quickly test something
