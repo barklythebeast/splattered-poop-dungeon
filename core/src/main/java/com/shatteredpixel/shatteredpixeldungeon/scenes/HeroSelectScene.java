@@ -94,6 +94,11 @@ public class HeroSelectScene extends PixelScene {
 
 	private RectF insets;
 
+	// Multiplayer selection UI
+	private OptionSlider playerCountSlider;
+	private int currentPlayerSelecting = 0;
+	private RenderedTextBlock playerSelectTitle;
+
 	private static boolean heroWasRandomized = true;
 	private static boolean chalWasRandomized = false;
 
@@ -102,6 +107,13 @@ public class HeroSelectScene extends PixelScene {
 		super.create();
 
 		Dungeon.hero = null;
+
+		// Initialize multiplayer selection
+		GamesInProgress.numSelectedPlayers = 1;
+		for (int i = 0; i < 3; i++) {
+			GamesInProgress.selectedClasses[i] = null;
+		}
+		currentPlayerSelecting = 0;
 
 		Badges.loadGlobal();
 		Journal.loadGlobal();
@@ -152,7 +164,22 @@ public class HeroSelectScene extends PixelScene {
 			protected void onClick() {
 				super.onClick();
 
-				if (GamesInProgress.selectedClass == null) return;
+				// Check if we're in multiplayer and all players have selected
+				if (GamesInProgress.numSelectedPlayers > 1) {
+					boolean allSelected = true;
+					for (int i = 0; i < GamesInProgress.numSelectedPlayers; i++) {
+						if (GamesInProgress.selectedClasses[i] == null) {
+							allSelected = false;
+							break;
+						}
+					}
+					if (!allSelected) return;
+				} else {
+					if (GamesInProgress.selectedClass == null) return;
+					// Single player: set first selected class
+					GamesInProgress.selectedClasses[0] = GamesInProgress.selectedClass;
+					GamesInProgress.numSelectedPlayers = 1;
+				}
 
 				Dungeon.hero = null;
 				Dungeon.daily = Dungeon.dailyReplay = false;
@@ -202,6 +229,20 @@ public class HeroSelectScene extends PixelScene {
 		optionsPane.visible = optionsPane.active = false;
 		optionsPane.layout();
 		add(optionsPane);
+
+		// Add player count slider for multiplayer
+		playerCountSlider = new OptionSlider(Messages.get(this, "player_count"), "1", "3", 1, 3) {
+			@Override
+			protected void onChange() {
+				super.onChange();
+				GamesInProgress.numSelectedPlayers = getSelectedValue();
+				currentPlayerSelecting = 0;
+				updatePlayerSelectionDisplay();
+			}
+		};
+		playerCountSlider.setSize(150, 18);
+		playerCountSlider.setSelectedValue(1);
+		add(playerCountSlider);
 
 		btnOptions = new IconButton(Icons.get(Icons.PREFS)){
 			@Override
@@ -479,6 +520,34 @@ public class HeroSelectScene extends PixelScene {
 		updateOptionsColor();
 	}
 
+	private void updatePlayerSelectionDisplay() {
+		// Update the hero button brightness to show current player's selection
+		for (int i = 0; i < heroBtns.size(); i++) {
+			HeroBtn btn = heroBtns.get(i);
+			if (GamesInProgress.numSelectedPlayers > 1) {
+				// In multiplayer, highlight the current player's selected hero
+				if (GamesInProgress.selectedClasses[currentPlayerSelecting] == btn.cl) {
+					// This is the selected hero for current player - highlight it
+					btn.visible = true;
+				}
+			}
+		}
+
+		// Update title to show which player is selecting
+		if (playerSelectTitle != null) {
+			remove(playerSelectTitle);
+		}
+		if (GamesInProgress.numSelectedPlayers > 1) {
+			playerSelectTitle = PixelScene.renderTextBlock(
+				Messages.get(this, "player", currentPlayerSelecting + 1),
+				12
+			);
+			playerSelectTitle.hardlight(Window.TITLE_COLOR);
+			PixelScene.align(playerSelectTitle);
+			add(playerSelectTitle);
+		}
+	}
+
 	private float uiAlpha;
 
 	@Override
@@ -581,14 +650,29 @@ public class HeroSelectScene extends PixelScene {
 		@Override
 		public void update() {
 			super.update();
-			if (cl != GamesInProgress.selectedClass){
-				if (!cl.isUnlocked()){
-					icon.brightness(0.1f);
+
+			if (GamesInProgress.numSelectedPlayers > 1) {
+				// Multiplayer: show current player's selection
+				if (cl != GamesInProgress.selectedClasses[currentPlayerSelecting]){
+					if (!cl.isUnlocked()){
+						icon.brightness(0.1f);
+					} else {
+						icon.brightness(0.6f);
+					}
 				} else {
-					icon.brightness(0.6f);
+					icon.brightness(1f);
 				}
 			} else {
-				icon.brightness(1f);
+				// Single player: original behavior
+				if (cl != GamesInProgress.selectedClass){
+					if (!cl.isUnlocked()){
+						icon.brightness(0.1f);
+					} else {
+						icon.brightness(0.6f);
+					}
+				} else {
+					icon.brightness(1f);
+				}
 			}
 		}
 
@@ -598,14 +682,37 @@ public class HeroSelectScene extends PixelScene {
 
 			if( !cl.isUnlocked() ){
 				ShatteredPixelDungeon.scene().addToFront( new WndMessage(cl.unlockMsg()));
-			} else if (GamesInProgress.selectedClass == cl) {
-				Window w = new WndHeroInfo(cl);
-				if (landscape()){
-					w.offset(Camera.main.width/6, 0);
+			} else if (GamesInProgress.numSelectedPlayers > 1) {
+				// Multiplayer mode: select hero for current player
+				if (GamesInProgress.selectedClasses[currentPlayerSelecting] == cl) {
+					// Show info if already selected
+					Window w = new WndHeroInfo(cl);
+					if (landscape()){
+						w.offset(Camera.main.width/6, 0);
+					}
+					ShatteredPixelDungeon.scene().addToFront(w);
+				} else {
+					// Select this hero for the current player
+					GamesInProgress.selectedClasses[currentPlayerSelecting] = cl;
+					updatePlayerSelectionDisplay();
+
+					// Auto-move to next player if not on last player
+					if (currentPlayerSelecting < GamesInProgress.numSelectedPlayers - 1) {
+						currentPlayerSelecting++;
+						updatePlayerSelectionDisplay();
+					}
 				}
-				ShatteredPixelDungeon.scene().addToFront(w);
 			} else {
-				setSelectedHero(cl);
+				// Single player mode: original behavior
+				if (GamesInProgress.selectedClass == cl) {
+					Window w = new WndHeroInfo(cl);
+					if (landscape()){
+						w.offset(Camera.main.width/6, 0);
+					}
+					ShatteredPixelDungeon.scene().addToFront(w);
+				} else {
+					setSelectedHero(cl);
+				}
 			}
 		}
 
