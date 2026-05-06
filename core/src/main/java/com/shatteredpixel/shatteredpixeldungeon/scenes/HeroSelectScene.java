@@ -523,7 +523,7 @@ public class HeroSelectScene extends PixelScene {
 	private void updatePlayerSelectionDisplay() {
 		// Update the hero button brightness to show current player's selection
 		for (int i = 0; i < heroBtns.size(); i++) {
-			HeroBtn btn = heroBtns.get(i);
+			HeroBtn btn = (HeroBtn) heroBtns.get(i);
 			if (GamesInProgress.numSelectedPlayers > 1) {
 				// In multiplayer, highlight the current player's selected hero
 				if (GamesInProgress.selectedClasses[currentPlayerSelecting] == btn.cl) {
@@ -633,7 +633,7 @@ public class HeroSelectScene extends PixelScene {
 
 	private class HeroBtn extends StyledButton {
 
-		private HeroClass cl;
+		HeroClass cl;  // Made package-private for outer class access
 
 		private static final int MIN_WIDTH = 20;
 		private static final int HEIGHT = 24;
