@@ -172,6 +172,7 @@ public class GameScene extends PixelScene {
 
 	private MenuPane menu;
 	private StatusPane status;
+	private StatusPane[] multiplayerStatuses;  // For multiplayer hero status displays
 
 	private BossHealthBar boss;
 
@@ -474,6 +475,13 @@ public class GameScene extends PixelScene {
 		StatusPane.buffBarRowAdjusts = buffBarRowAdjusts;
 		status.setRect(insets.left, uiSize > 0 ? uiCamera.height-39-insets.bottom : screentop, uiCamera.width - insets.left - insets.right, 0 );
 		add(status);
+
+		// Create multiplayer status panes in corners if multiplayer
+		if (MultiplayerManager.isMultiplayer()) {
+			multiplayerStatuses = new StatusPane[Dungeon.numPlayers];
+			// For now, we'll show status through the main status pane syncing to current hero
+			// Future: implement separate corner indicators for each hero
+		}
 
 		if (uiSize < 2 && largeInsetTop != 0) {
 			SkinnedBlock bar = new SkinnedBlock(uiCamera.width, largeInsetTop, TextureCache.createSolid(0x88000000));
@@ -948,6 +956,17 @@ public class GameScene extends PixelScene {
 			if (tagAppearing)   layoutTags();
 			else                tagDisappeared = true;
 
+		}
+
+		// In multiplayer, sync status pane to show current player's hero
+		if (MultiplayerManager.isMultiplayer()) {
+			Hero currentHero = MultiplayerManager.getCurrentPlayer();
+			if (currentHero != null && currentHero != Dungeon.hero) {
+				// Temporarily set Dungeon.hero for status pane to display correct hero
+				Dungeon.hero = currentHero;
+				status.updateAvatar();
+				Dungeon.hero = currentHero;  // Keep it as current hero
+			}
 		}
 
 		cellSelector.enable(Dungeon.hero.ready);

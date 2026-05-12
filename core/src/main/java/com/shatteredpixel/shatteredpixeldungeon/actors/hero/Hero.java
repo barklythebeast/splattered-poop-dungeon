@@ -2250,13 +2250,30 @@ public class Hero extends Char {
 			}
 		}
 
-		Game.runOnRenderThread(new Callback() {
-			@Override
-			public void call() {
-				GameScene.gameOver();
-				Sample.INSTANCE.play( Assets.Sounds.DEATH );
+		// In multiplayer, check if all heroes are dead
+		boolean allHeroesDead = true;
+		if (Dungeon.heroes != null && Dungeon.numPlayers > 1) {
+			for (Hero h : Dungeon.heroes) {
+				if (h != null && h.isAlive()) {
+					allHeroesDead = false;
+					break;
+				}
 			}
-		});
+		}
+
+		// Only end game if single player or all heroes dead in multiplayer
+		if (Dungeon.numPlayers == 1 || allHeroesDead) {
+			Game.runOnRenderThread(new Callback() {
+				@Override
+				public void call() {
+					GameScene.gameOver();
+					Sample.INSTANCE.play( Assets.Sounds.DEATH );
+				}
+			});
+		} else {
+			// Multiplayer: hero died but others alive, just play death sound
+			Sample.INSTANCE.play( Assets.Sounds.DEATH );
+		}
 
 		if (cause instanceof Hero.Doom) {
 			((Hero.Doom)cause).onDeath();

@@ -653,7 +653,11 @@ public class HeroSelectScene extends PixelScene {
 
 			if (GamesInProgress.numSelectedPlayers > 1) {
 				// Multiplayer: show current player's selection
-				if (cl != GamesInProgress.selectedClasses[currentPlayerSelecting]){
+				HeroClass selectedClass = null;
+				if (currentPlayerSelecting >= 0 && currentPlayerSelecting < GamesInProgress.selectedClasses.length) {
+					selectedClass = GamesInProgress.selectedClasses[currentPlayerSelecting];
+				}
+				if (cl != selectedClass){
 					if (!cl.isUnlocked()){
 						icon.brightness(0.1f);
 					} else {
@@ -684,22 +688,24 @@ public class HeroSelectScene extends PixelScene {
 				ShatteredPixelDungeon.scene().addToFront( new WndMessage(cl.unlockMsg()));
 			} else if (GamesInProgress.numSelectedPlayers > 1) {
 				// Multiplayer mode: select hero for current player
-				if (GamesInProgress.selectedClasses[currentPlayerSelecting] == cl) {
-					// Show info if already selected
-					Window w = new WndHeroInfo(cl);
-					if (landscape()){
-						w.offset(Camera.main.width/6, 0);
-					}
-					ShatteredPixelDungeon.scene().addToFront(w);
-				} else {
-					// Select this hero for the current player
-					GamesInProgress.selectedClasses[currentPlayerSelecting] = cl;
-					updatePlayerSelectionDisplay();
-
-					// Auto-move to next player if not on last player
-					if (currentPlayerSelecting < GamesInProgress.numSelectedPlayers - 1) {
-						currentPlayerSelecting++;
+				if (currentPlayerSelecting >= 0 && currentPlayerSelecting < GamesInProgress.selectedClasses.length) {
+					if (GamesInProgress.selectedClasses[currentPlayerSelecting] == cl) {
+						// Show info if already selected
+						Window w = new WndHeroInfo(cl);
+						if (landscape()){
+							w.offset(Camera.main.width/6, 0);
+						}
+						ShatteredPixelDungeon.scene().addToFront(w);
+					} else {
+						// Select this hero for the current player
+						GamesInProgress.selectedClasses[currentPlayerSelecting] = cl;
 						updatePlayerSelectionDisplay();
+
+						// Auto-move to next player if not on last player
+						if (currentPlayerSelecting < GamesInProgress.numSelectedPlayers - 1) {
+							currentPlayerSelecting++;
+							updatePlayerSelectionDisplay();
+						}
 					}
 				}
 			} else {
